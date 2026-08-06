@@ -1,0 +1,23 @@
+run_label: pacbio_16s_default
+
+# Cutadapt cleanup before QIIME 2 import.
+cleanup_quality_cutoff: 30
+cleanup_min_length: 100
+cleanup_poly_g_min_run: 10
+cleanup_poly_a_min_run: 10
+
+# QIIME 2 DADA2 CCS settings reproducing the previously used command.
+dada2_front: AGRGTTYGATYMTGGCTCAG
+dada2_adapter: RGYTACCTTGTTACGACTT
+dada2_min_len: 1000
+dada2_max_len: 1600
+
+# Taxonomy.
+taxonomy_enabled: true
+taxonomy_reference_id: silva_138_99
+taxonomy_classifier: /data/Reference/QIIME2-2025.7/Bacteria/SILVA/silva-138-99-nb-classifier.qza
+taxonomy_confidence: 0.8
+taxonomy_reads_per_batch: auto
+
+# Phylogeny is run by default.
+phylogeny_enabled: true

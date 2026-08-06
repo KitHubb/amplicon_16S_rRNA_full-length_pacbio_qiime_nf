@@ -1,0 +1,3 @@
+sample_id,run_id,assay_id,library_round,sample_type,input_type,input_file
+GS16Bi241203,HN00280036,16S_full,Library1,Study,tar,/data/FASTQ/HN00280036/GS16Bi241203_cell1.tar
+GS20Bi241223,HN00280036,16S_full,Library2,Study,fastq,/data/FASTQ/HN00280036/GS20Bi241223_HiFi.fastq.gz

@@ -1,0 +1,58 @@
+# Nextflow runtime
+work/
+.nextflow/
+.nextflow.log*
+
+# Pipeline outputs
+results/
+output/
+reports/
+
+# Execution reports
+*.trace.txt
+*.timeline.html
+*.report.html
+*.dag.html
+resolved_nextflow.config.txt
+
+# Sequencing data
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.bai
+*.pbi
+*.xml
+*.tar
+
+# QIIME 2 artifacts
+*.qza
+*.qzv
+*.biom
+
+# Containers and databases
+*.sif
+*.img
+containers/
+databases/
+
+# Python and editors
+__pycache__/
+*.pyc
+.vscode/
+.DS_Store
+
+# Local run metadata and logs
+assets/*_samplesheet*.csv
+assets/*_test_*.csv
+logs/
+
+# Accidental shell-token files
+do
+done
+echo
+else
+fi
+qiime
+singularity
