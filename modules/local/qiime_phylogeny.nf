@@ -3,7 +3,7 @@ process QIIME_PHYLOGENY {
     tag "${params.run_label}:mafft_fasttree"
     label 'qiime_phylogeny'
 
-    container "${params.qiime_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qiime_sif) ? params.qiime_sif : params.qiime_container }
 
     publishDir "${params.outdir}/phylogeny", mode: 'link', overwrite: true
 
@@ -52,5 +52,10 @@ process QIIME_PHYLOGENY {
     "QIIME_PHYLOGENY":
       qiime2: \$(qiime --version 2>&1 | head -n 1)
     END_VERSIONS
+    """
+    stub:
+    """
+    touch aligned-rep-seqs.qza masked-aligned-rep-seqs.qza unrooted-tree.qza rooted-tree.qza
+    echo "stub: true" > versions.yml
     """
 }

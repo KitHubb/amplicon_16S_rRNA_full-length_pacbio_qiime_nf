@@ -3,7 +3,7 @@ process FASTQC_RAW {
     tag "${meta.id}:raw"
     label 'qc'
 
-    container "${params.qc_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qc_sif) ? params.qc_sif : params.fastqc_container }
 
     publishDir "${params.outdir}/raw_qc/fastqc", mode: 'copy', overwrite: true
 
@@ -26,6 +26,11 @@ process FASTQC_RAW {
       fastqc: \$(fastqc --version | sed 's/FastQC v//')
     END_VERSIONS
     """
+    stub:
+    """
+    touch ${reads.baseName.replaceAll(/\.fastq$/, "")}_fastqc.zip ${reads.baseName.replaceAll(/\.fastq$/, "")}_fastqc.html
+    echo "stub: true" > versions.yml
+    """
 }
 
 process FASTQC_CLEAN {
@@ -33,7 +38,7 @@ process FASTQC_CLEAN {
     tag "${meta.id}:clean"
     label 'qc'
 
-    container "${params.qc_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qc_sif) ? params.qc_sif : params.fastqc_container }
 
     publishDir "${params.outdir}/clean_qc/fastqc", mode: 'copy', overwrite: true
 
@@ -55,5 +60,10 @@ process FASTQC_CLEAN {
     "FASTQC_CLEAN":
       fastqc: \$(fastqc --version | sed 's/FastQC v//')
     END_VERSIONS
+    """
+    stub:
+    """
+    touch ${reads.baseName.replaceAll(/\.fastq$/, "")}_fastqc.zip ${reads.baseName.replaceAll(/\.fastq$/, "")}_fastqc.html
+    echo "stub: true" > versions.yml
     """
 }

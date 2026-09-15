@@ -15,7 +15,6 @@ dada2_max_len: 1600
 # Taxonomy.
 taxonomy_enabled: true
 taxonomy_reference_id: silva_138_99
-taxonomy_classifier: /data/Reference/QIIME2-2025.7/Bacteria/SILVA/silva-138-99-nb-classifier.qza
 taxonomy_confidence: 0.8
 taxonomy_reads_per_batch: auto
 

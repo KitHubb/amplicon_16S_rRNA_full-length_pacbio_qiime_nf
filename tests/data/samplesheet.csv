@@ -1,0 +1,2 @@
+sample_id,run_id,assay_id,library_round,sample_type,input_type,input_file
+Synthetic,Test,16S_full,1,Synthetic,fastq,reads.fastq

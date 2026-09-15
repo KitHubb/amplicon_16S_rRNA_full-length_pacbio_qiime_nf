@@ -79,4 +79,6 @@ fi
 awk -F '\t' 'NR == 2 { if ($1 != "AnySample" || $4 != "1") exit 1 }' \
   "$TEST_DIR/AnySample.input_inventory.tsv"
 
+python3 tests/test_validation.py
+
 echo '[PASS] Python, shell, static pipeline, and generic TAR input tests completed.'

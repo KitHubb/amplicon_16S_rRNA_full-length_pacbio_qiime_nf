@@ -3,7 +3,7 @@ process MULTIQC_RAW {
     tag 'raw_fastqc'
     label 'qc'
 
-    container "${params.qc_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qc_sif) ? params.qc_sif : params.multiqc_container }
 
     publishDir "${params.outdir}/raw_qc/multiqc", mode: 'copy', overwrite: true
 
@@ -27,6 +27,12 @@ process MULTIQC_RAW {
       multiqc: \$(multiqc --version | sed 's/multiqc, version //')
     END_VERSIONS
     """
+    stub:
+    """
+    touch multiqc_report.html
+    mkdir -p multiqc_data
+    echo "stub: true" > versions.yml
+    """
 }
 
 process MULTIQC_CLEAN {
@@ -34,7 +40,7 @@ process MULTIQC_CLEAN {
     tag 'clean_fastqc'
     label 'qc'
 
-    container "${params.qc_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qc_sif) ? params.qc_sif : params.multiqc_container }
 
     publishDir "${params.outdir}/clean_qc/multiqc", mode: 'copy', overwrite: true
 
@@ -57,5 +63,11 @@ process MULTIQC_CLEAN {
     "MULTIQC_CLEAN":
       multiqc: \$(multiqc --version | sed 's/multiqc, version //')
     END_VERSIONS
+    """
+    stub:
+    """
+    touch multiqc_report.html
+    mkdir -p multiqc_data
+    echo "stub: true" > versions.yml
     """
 }

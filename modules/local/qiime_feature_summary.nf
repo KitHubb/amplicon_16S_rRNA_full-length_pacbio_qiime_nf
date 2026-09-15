@@ -3,7 +3,7 @@ process QIIME_FEATURE_SUMMARY {
     tag "${params.run_label}:feature_summary"
     label 'qiime_summary'
 
-    container "${params.qiime_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qiime_sif) ? params.qiime_sif : params.qiime_container }
 
     publishDir "${params.outdir}/qiime_dada2", mode: 'link', overwrite: true
 
@@ -49,5 +49,10 @@ process QIIME_FEATURE_SUMMARY {
     "QIIME_FEATURE_SUMMARY":
       qiime2: \$(qiime --version 2>&1 | head -n 1)
     END_VERSIONS
+    """
+    stub:
+    """
+    touch dada2-ccs_table.qzv dada2-ccs_rep.qzv dada2-ccs_stats.qzv
+    echo "stub: true" > versions.yml
     """
 }

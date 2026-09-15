@@ -56,3 +56,7 @@ else
 fi
 qiime
 singularity
+
+# Bundled synthetic test reads
+!tests/data/*.fastq
+local.config

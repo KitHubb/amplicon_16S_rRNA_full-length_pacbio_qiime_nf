@@ -3,6 +3,8 @@ process PREPARE_PACBIO_INPUT {
     tag "${meta.id}:${meta.input_type}"
     label 'input_prep'
 
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.cutadapt_sif) ? params.cutadapt_sif : params.cutadapt_container }
+
     publishDir "${params.outdir}/input_preparation",
         mode: 'copy',
         overwrite: true,

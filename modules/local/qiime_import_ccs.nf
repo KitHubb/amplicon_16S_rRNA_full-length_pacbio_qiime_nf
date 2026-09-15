@@ -3,7 +3,7 @@ process QIIME_IMPORT_CCS {
     tag "${params.run_label}:ccs_import"
     label 'qiime_import'
 
-    container "${params.qiime_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qiime_sif) ? params.qiime_sif : params.qiime_container }
 
     publishDir "${params.outdir}/qiime_import", mode: 'link', overwrite: true
 
@@ -68,5 +68,11 @@ process QIIME_IMPORT_CCS {
     "QIIME_IMPORT_CCS":
       qiime2: \$(qiime --version 2>&1 | head -n 1)
     END_VERSIONS
+    """
+    stub:
+    """
+    cp ${manifest_template} qiime_manifest_ccs.tsv
+    touch samples_raw.qza samples_raw.demux.summary.qzv
+    echo "stub: true" > versions.yml
     """
 }

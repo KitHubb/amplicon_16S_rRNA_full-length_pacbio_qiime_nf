@@ -33,7 +33,7 @@ workflow {
         error 'Invalid DADA2 length range: dada2_min_len must be >=1 and <= dada2_max_len'
     }
 
-    if (taxonomy_enabled && !params.taxonomy_classifier) {
+    if (!params.stop_after_qc.toString().toBoolean() && taxonomy_enabled && !params.taxonomy_classifier) {
         error 'taxonomy_enabled=true requires taxonomy_classifier'
     }
 
@@ -67,41 +67,43 @@ workflow {
         READ_CLEANUP.out.cleanup_json
     )
 
-    BUILD_QIIME_MANIFEST_CCS(
-        READ_CLEANUP.out.cleaned_reads
-    )
-
-    QIIME_IMPORT_CCS(
-        BUILD_QIIME_MANIFEST_CCS.out.manifest_template,
-        BUILD_QIIME_MANIFEST_CCS.out.fastq_files
-    )
-
-    QIIME_DADA2_CCS(
-        QIIME_IMPORT_CCS.out.demux
-    )
-
-    QIIME_FEATURE_SUMMARY(
-        QIIME_DADA2_CCS.out.table,
-        QIIME_DADA2_CCS.out.repseq,
-        QIIME_DADA2_CCS.out.stats
-    )
-
-    if (taxonomy_enabled) {
-        classifier_ch = Channel.fromPath(
-            params.taxonomy_classifier,
-            checkIfExists: true
+    if (!params.stop_after_qc.toString().toBoolean()) {
+        BUILD_QIIME_MANIFEST_CCS(
+            READ_CLEANUP.out.cleaned_reads
         )
 
-        QIIME_TAXONOMY(
+        QIIME_IMPORT_CCS(
+            BUILD_QIIME_MANIFEST_CCS.out.manifest_template,
+            BUILD_QIIME_MANIFEST_CCS.out.fastq_files
+        )
+
+        QIIME_DADA2_CCS(
+            QIIME_IMPORT_CCS.out.demux
+        )
+
+        QIIME_FEATURE_SUMMARY(
             QIIME_DADA2_CCS.out.table,
             QIIME_DADA2_CCS.out.repseq,
-            classifier_ch
+            QIIME_DADA2_CCS.out.stats
         )
-    }
 
-    if (phylogeny_enabled) {
-        QIIME_PHYLOGENY(
-            QIIME_DADA2_CCS.out.repseq
-        )
+        if (taxonomy_enabled) {
+            classifier_ch = Channel.fromPath(
+                params.taxonomy_classifier,
+                checkIfExists: true
+            )
+
+            QIIME_TAXONOMY(
+                QIIME_DADA2_CCS.out.table,
+                QIIME_DADA2_CCS.out.repseq,
+                classifier_ch
+            )
+        }
+
+        if (phylogeny_enabled) {
+            QIIME_PHYLOGENY(
+                QIIME_DADA2_CCS.out.repseq
+            )
+        }
     }
 }

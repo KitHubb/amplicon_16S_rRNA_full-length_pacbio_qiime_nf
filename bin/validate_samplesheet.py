@@ -43,7 +43,10 @@ def main() -> None:
             row = {key: (value or "").strip() for key, value in row.items()}
             sample_id = row["sample_id"]
             input_type = row["input_type"].lower()
-            input_file = os.path.abspath(row["input_file"])
+            input_file = row["input_file"]
+            if not os.path.isabs(input_file):
+                input_file = os.path.join(os.path.dirname(os.path.realpath(input_csv)), input_file)
+            input_file = os.path.abspath(input_file)
 
             if not sample_id:
                 fail(f"Row {line_no}: empty sample_id")

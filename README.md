@@ -1,6 +1,6 @@
-# amplicon_16S_qiime_nf
+# amplicon_16S_rRNA_full-length_pacbio_qiime_nf
 
-A lightweight Nextflow DSL2 workflow for PacBio full-length 16S CCS reads using QIIME 2 and Singularity/Apptainer.
+A lightweight Nextflow DSL2 workflow for PacBio full-length 16S CCS reads using QIIME 2 with Docker, Singularity or Apptainer.
 
 ## Workflow
 
@@ -29,133 +29,56 @@ The DADA2 command reproduces the validated analysis settings by explicitly provi
 - Cutadapt 5.2
 - QIIME 2 Amplicon 2025.7
 
-The repository does **not** include the Singularity image files or the SILVA classifier. Users must provide compatible local files and configure their paths as described below.
+## Containers and quick start (v0.0.9)
 
-## Required container images
+Nextflow downloads these public images automatically for the selected runtime:
 
-The workflow uses three container images:
-
-| Parameter | Required software |
+| Parameter | Default image |
 |---|---|
-| `qc_sif` | FastQC and MultiQC |
-| `cutadapt_sif` | Cutadapt |
-| `qiime_sif` | QIIME 2 Amplicon with DADA2, feature-classifier, alignment, and phylogeny plugins |
+| `fastqc_container` | `quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0` |
+| `multiqc_container` | `quay.io/biocontainers/multiqc:1.27.1--pyhdfd78af_0` |
+| `cutadapt_container` | `quay.io/biocontainers/cutadapt:5.2--py310h1fe012e_0` |
+| `qiime_container` | `quay.io/qiime2/amplicon:2025.7` |
 
-The development server uses the following paths:
+QC tools use [BioContainers](https://bioconda.github.io/recipes/multiqc/README.html).
+QIIME uses its [official distribution](https://github.com/qiime2/distributions) to include the compatible DADA2, classifier and phylogeny plugins.
+Tags were checked against the Quay registry. Override image parameters to use your own compatible images or digest-pinned references.
 
-```text
-/data/software/singularity/qc_fastqc_multiqc.sif
-/data/software/singularity/read_cleanup_cutadapt-5.2.sif
-/data/software/singularity/qiime2_amplicon_2025.7.sif
-```
-
-External users do **not** need to reproduce these directory paths. Point the workflow to the corresponding files on your own system using a local configuration file or command-line parameters.
-
-## Run on another system
-
-### 1. Create a local configuration file
-
-Create `local.config` outside the repository or in your launch directory:
-
-```groovy
-params {
-    qc_sif = '/absolute/path/to/qc_fastqc_multiqc.sif'
-    cutadapt_sif = '/absolute/path/to/read_cleanup_cutadapt-5.2.sif'
-    qiime_sif = '/absolute/path/to/qiime2_amplicon_2025.7.sif'
-
-    taxonomy_classifier = '/absolute/path/to/silva-138-99-nb-classifier.qza'
-}
-
-singularity {
-    enabled = true
-    autoMounts = true
-}
-```
-
-Use absolute paths whenever possible. The file names can differ from the examples as long as the images contain the required software.
-
-Do not commit a machine-specific configuration file containing local paths:
-
-```gitignore
-local.config
-```
-
-### 2. Run directly from GitHub
+Requirements: Nextflow >=26.04.2, Java 17+, Python 3 on the host, and one container runtime. Samplesheet validation runs on the host because it checks input paths before Nextflow stages those files. Analysis tools run in containers. Public images target Linux x86-64; initial downloads require network access and available disk space.
 
 ```bash
-nextflow -c local.config run KitHubb/amplicon_16S_qiime_nf \
-  -profile singularity \
+nextflow run . -profile docker \
   --input /absolute/path/to/samplesheet.csv \
-  --outdir /absolute/path/to/results \
-  -resume
+  --taxonomy_classifier /absolute/path/to/compatible-classifier.qza \
+  --outdir results/analysis -resume
 ```
 
-To run a fixed release, branch, or commit, add `-r`:
+Replace `docker` with `singularity` or `apptainer` for automatic image conversion/caching. Select one runtime profile per run. With Docker, output files use your host UID/GID.
+
+For existing local images, use `-profile singularity` or `-profile apptainer` and override `--qc_sif`, `--cutadapt_sif`, and `--qiime_sif`. These default to null and are ignored by Docker. The combined `qc_sif` must contain both FastQC and MultiQC; the Cutadapt image also needs Bash, gzip and tar for input preparation. Custom `_container` parameters are also supported. Keep local paths in an untracked `local.config`.
+
+The classifier is not bundled. Supply `--taxonomy_classifier` or disable taxonomy with `--taxonomy_enabled false`. The default parameter YAML no longer overrides classifier paths.
+
+## Tests and CI
 
 ```bash
-nextflow -c local.config run KitHubb/amplicon_16S_qiime_nf \
-  -r main \
-  -profile singularity \
-  --input /absolute/path/to/samplesheet.csv \
-  --outdir /absolute/path/to/results \
-  -resume
+# Python/shell regressions
+bash tests/test_python_and_shell.sh
+
+# Full graph including optional taxonomy, without containers or analysis tools
+nextflow run . -profile test_stub -stub-run \
+  --taxonomy_enabled true --taxonomy_classifier tests/data/classifier.stub \
+  --outdir results/stub
+python3 tests/check_outputs.py results/stub --stub
+
+# Actual FastQC, MultiQC and Cutadapt on bundled synthetic reads
+nextflow run . -profile test,docker
+python3 tests/check_outputs.py results/test
 ```
 
-### 3. Run from a cloned repository
+`test` stops after QC, checks all 20 reads are retained, and verifies removal of the synthetic poly-G tails. It needs no classifier or external sequencing data. `test_full` enables the core QIIME workflow and phylogeny; use `-profile test_full,docker -stub-run` to check container wiring, or provide real CCS data with `--input` for actual analysis. `test_stub` selects the same graph with all container runtimes disabled; always pass `-stub-run`. Stub `.qza`/`.qzv` files are placeholders, not valid analysis artifacts. Synthetic reads are not a DADA2 accuracy or error-learning test.
 
-```bash
-git clone https://github.com/KitHubb/amplicon_16S_qiime_nf.git
-cd amplicon_16S_qiime_nf
-
-nextflow -c /absolute/path/to/local.config run main.nf \
-  -profile singularity \
-  --input /absolute/path/to/samplesheet.csv \
-  --outdir /absolute/path/to/results \
-  -resume
-```
-
-### Command-line path overrides
-
-The same paths can be supplied without editing any config file:
-
-```bash
-nextflow run KitHubb/amplicon_16S_qiime_nf \
-  -profile singularity \
-  --input /absolute/path/to/samplesheet.csv \
-  --outdir /absolute/path/to/results \
-  --qc_sif /absolute/path/to/qc_fastqc_multiqc.sif \
-  --cutadapt_sif /absolute/path/to/read_cleanup_cutadapt-5.2.sif \
-  --qiime_sif /absolute/path/to/qiime2_amplicon_2025.7.sif \
-  --taxonomy_classifier /absolute/path/to/silva-138-99-nb-classifier.qza \
-  -resume
-```
-
-Command-line parameters have the highest priority and therefore override repository defaults, local config values, and parameter-file values.
-
-### Important parameter precedence note
-
-Nextflow resolves pipeline parameters in this order, from lowest to highest priority:
-
-```text
-pipeline defaults
-    < config files
-    < -params-file values
-    < command-line --parameters
-```
-
-The bundled `params/pacbio_16s_default.yml` currently contains the development-server classifier path. Therefore, an external user who runs with that parameter file should also provide their classifier path on the command line:
-
-```bash
-nextflow -c local.config run KitHubb/amplicon_16S_qiime_nf \
-  -profile singularity \
-  -params-file params/pacbio_16s_default.yml \
-  --input /absolute/path/to/samplesheet.csv \
-  --outdir /absolute/path/to/results \
-  --taxonomy_classifier /absolute/path/to/silva-138-99-nb-classifier.qza \
-  -resume
-```
-
-Alternatively, copy the bundled YAML file, update the paths, and use the modified copy.
+CI runs script checks, profile resolution, the full graph stub test including taxonomy, and actual Docker QC. A pushed `v0.0.9` tag publishes a GitHub Release only after these tests pass and the tag matches the manifest. Notes come from the corresponding section of [CHANGELOG.md](CHANGELOG.md). Creating/pushing a tag is a separate maintainer action. Full biological DADA2/classifier validation requires real data and is not part of the small CI test.
 
 ## Taxonomy classifier
 
@@ -191,14 +114,14 @@ Supported input types:
 - `fastq`: `.fastq`, `.fastq.gz`, `.fq`, or `.fq.gz`
 - `tar`: one sample-level TAR archive containing one or more FASTQ files
 
-Files containing `_trim_` are ignored when a TAR archive is prepared. Input paths should preferably be absolute, especially when launching the workflow directly from GitHub.
+Files containing `_trim_` are ignored when a TAR archive is prepared. Relative input paths resolve against the original samplesheet directory. Absolute paths are also supported.
 
 Example:
 
 ```csv
 sample_id,run_id,assay_id,library_round,sample_type,input_type,input_file
-Sample01,Run01,16S,1,Stool,tar,/data/FASTQ/Run01/Sample01_cell1.tar
-Sample02,Run01,16S,1,Stool,fastq,/data/FASTQ/Run01/Sample02_HiFi.fastq.gz
+Sample01,Run01,16S_full,1,Stool,tar,/data/FASTQ/Run01/Sample01_cell1.tar
+Sample02,Run01,16S_full,1,Stool,fastq,/data/FASTQ/Run01/Sample02_HiFi.fastq.gz
 ```
 
 ## Create a samplesheet

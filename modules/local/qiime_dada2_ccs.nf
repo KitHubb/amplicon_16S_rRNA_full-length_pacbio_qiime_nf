@@ -3,7 +3,7 @@ process QIIME_DADA2_CCS {
     tag "${params.run_label}:dada2_ccs"
     label 'qiime_dada2'
 
-    container "${params.qiime_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qiime_sif) ? params.qiime_sif : params.qiime_container }
 
     publishDir "${params.outdir}/qiime_dada2", mode: 'link', overwrite: true
 
@@ -53,5 +53,10 @@ process QIIME_DADA2_CCS {
     "QIIME_DADA2_CCS":
       qiime2: \$(qiime --version 2>&1 | head -n 1)
     END_VERSIONS
+    """
+    stub:
+    """
+    touch dada2-ccs_table.qza dada2-ccs_rep.qza dada2-ccs_stats.qza
+    echo "stub: true" > versions.yml
     """
 }

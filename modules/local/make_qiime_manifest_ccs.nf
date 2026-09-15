@@ -3,7 +3,7 @@ process MAKE_QIIME_MANIFEST_CCS {
     tag "${params.run_label}:ccs_manifest"
     label 'qiime_import'
 
-    container "${params.cutadapt_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.cutadapt_sif) ? params.cutadapt_sif : params.cutadapt_container }
 
     publishDir "${params.outdir}/qiime_import", mode: 'copy', overwrite: true,
         pattern: 'qiime_manifest_ccs.template.tsv'

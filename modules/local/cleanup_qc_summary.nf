@@ -3,7 +3,7 @@ process CLEANUP_QC_SUMMARY {
     tag "${params.run_label}:cleanup_summary"
     label 'read_cleanup'
 
-    container "${params.cutadapt_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.cutadapt_sif) ? params.cutadapt_sif : params.cutadapt_container }
 
     publishDir "${params.outdir}/cleanup_qc", mode: 'copy', overwrite: true
 
@@ -24,5 +24,10 @@ process CLEANUP_QC_SUMMARY {
     "CLEANUP_QC_SUMMARY":
       python: \$(python3 --version 2>&1 | awk '{print \$2}')
     END_VERSIONS
+    """
+    stub:
+    """
+    touch cleanup_qc_summary.tsv
+    echo "stub: true" > versions.yml
     """
 }

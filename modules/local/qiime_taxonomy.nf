@@ -3,7 +3,7 @@ process QIIME_TAXONOMY {
     tag "${params.run_label}:${params.taxonomy_reference_id}"
     label 'qiime_taxonomy'
 
-    container "${params.qiime_sif}"
+    container { (workflow.containerEngine in ['singularity', 'apptainer'] && params.qiime_sif) ? params.qiime_sif : params.qiime_container }
 
     publishDir "${params.outdir}/taxonomy/${params.taxonomy_reference_id}",
         mode: 'link',
@@ -65,5 +65,10 @@ process QIIME_TAXONOMY {
     "QIIME_TAXONOMY":
       qiime2: \$(qiime --version 2>&1 | head -n 1)
     END_VERSIONS
+    """
+    stub:
+    """
+    touch taxonomy.qza taxonomy.qzv taxonomy_barplot.qzv taxonomy.tsv
+    echo "stub: true" > versions.yml
     """
 }
